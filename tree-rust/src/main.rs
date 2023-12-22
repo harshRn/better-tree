@@ -1,57 +1,47 @@
 use colored::*;
 use std::fs;
 
-fn print_dir_content(
-    path: &str,
-    ntabs: Option<usize>,
-    curr_layer: Option<i32>,
-    max_layer: Option<i32>,
-) -> Option<(i32, i32)> {
-    let mut ndirs = 0;
-    let mut nfiles = 0;
+struct Stats {
+    dirs: usize,
+    files: usize,
+}
+
+fn print_dir_content(path: &str, ntabs: usize, curr_layer: i32, max_layer: i32) -> Stats {
+    let mut dir_stats = Stats { dirs: 0, files: 0 };
 
     if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                if let Ok(metadata) = entry.metadata() {
-                    if let Some(entry_name) = entry.file_name().to_str() {
-                        let spaces = " ".repeat(ntabs.unwrap_or(0));
-                        if curr_layer == max_layer {
-                            return Some((ndirs, nfiles));
-                        }
-                        if metadata.is_dir() {
-                            ndirs += 1;
-                            println!("{}{}", spaces, entry_name.blue());
-                            if let Some((sub_ndirs, sub_nfiles)) = print_dir_content(
-                                entry.path().to_str().unwrap_or(""),
-                                Some(ntabs.unwrap_or(0) + 3),
-                                Some(curr_layer.unwrap_or(0) + 1),
-                                max_layer,
-                            ) {
-                                ndirs += sub_ndirs;
-                                nfiles += sub_nfiles;
-                            }
-                        } else {
-                            nfiles += 1;
-                            println!("{}{}", spaces, entry_name);
-                        }
+        for entry in entries.filter_map(Result::ok) {
+            if let Ok(metadata) = entry.metadata() {
+                if let Some(entry_name) = entry.file_name().to_str() {
+                    if entry_name.starts_with(".") {
+                        continue;
+                    }
+                    let spaces = " ".repeat(ntabs);
+                    if curr_layer == max_layer {
+                        return dir_stats;
+                    }
+                    if metadata.is_dir() {
+                        dir_stats.dirs += 1;
+                        println!("{}{}", spaces, entry_name.blue());
+                        let sub_path = entry.path().to_string_lossy().into_owned();
+                        let sub_stats = print_dir_content(&sub_path, ntabs + 3, curr_layer + 1, max_layer);
+                        dir_stats.dirs += sub_stats.dirs;
+                        dir_stats.files += sub_stats.files;
+                    } else {
+                        dir_stats.files += 1;
+                        println!("{}{}", spaces, entry_name);
                     }
                 }
             }
         }
-        return Some((ndirs, nfiles));
-    } else {
-        None
     }
+
+    dir_stats
 }
 
 fn main() {
-    if let Some((total_dirs, total_files)) = print_dir_content(
-        ".",
-        Some(0),
-        Some(0),
-        Some(2)
-    ) {
-        println!("\nTotal dirs: {}\nTotal files: {}", total_dirs, total_files);
-    }
+    let root_path = ".";
+    let stats = print_dir_content(root_path, 0, 0, 3);
+
+    println!("\n{} directories, {} files", stats.dirs, stats.files);
 }
