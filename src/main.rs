@@ -1,4 +1,3 @@
-use colored::*;
 use getopts::Options;
 use std::{fs, usize};
 extern crate getopts;
@@ -8,31 +7,59 @@ struct Stats {
     files: usize,
 }
 
-fn print_dir_content(path: &str, ntabs: usize, curr_layer: i32, max_layer: i32) -> Stats {
+// │ └ ├ ─
+
+fn print_entry(prefix: &str, entry_name: &str, is_last: bool) {
+    let mark = if is_last {"└─ "} else {"├─ "};
+    println!("{}{}{}", prefix, mark, entry_name);
+}
+
+fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) -> Stats {
     let mut dir_stats = Stats { dirs: 0, files: 0 };
 
     if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries.filter_map(Result::ok) {
+        let mut entries: Vec<_> = entries.collect::<Result<_, _>>().unwrap_or_else(|_| vec![]);
+        entries.sort_by(|a, b| {
+            let a_file_name = a.file_name();
+            let b_file_name = b.file_name();
+
+            let a_name = a_file_name.to_string_lossy();
+            let b_name = b_file_name.to_string_lossy();
+
+            let a_starts_with_dot = a_name.starts_with(".");
+            let b_starts_with_dot = b_name.starts_with(".");
+
+            if a_starts_with_dot && !b_starts_with_dot {
+                std::cmp::Ordering::Less
+            } else if !a_starts_with_dot && b_starts_with_dot {
+                std::cmp::Ordering::Greater
+            } else {
+                a_name.partial_cmp(&b_name).unwrap_or(std::cmp::Ordering::Equal)
+            }
+        });
+        let total_entries = entries.len();
+        for (index, entry) in entries.iter().enumerate() {
             if let Ok(metadata) = entry.metadata() {
                 if let Some(entry_name) = entry.file_name().to_str() {
                     if entry_name.starts_with(".") {
                         continue;
                     }
-                    let spaces = " ".repeat(ntabs);
                     if curr_layer == max_layer {
                         return dir_stats;
                     }
+                    let is_last = index == total_entries - 1;
+                    let mark = if is_last {" "} else {"│"};
                     if metadata.is_dir() {
                         dir_stats.dirs += 1;
-                        println!("{}{}", spaces, entry_name.blue());
+                        print_entry(prefix, entry_name, is_last);
                         let sub_path = entry.path().to_string_lossy().into_owned();
                         let sub_stats =
-                            print_dir_content(&sub_path, ntabs + 3, curr_layer + 1, max_layer);
+                            print_dir_content(&sub_path, &format!("{}{}  ", prefix, mark), curr_layer + 1, max_layer);
                         dir_stats.dirs += sub_stats.dirs;
                         dir_stats.files += sub_stats.files;
                     } else {
                         dir_stats.files += 1;
-                        println!("{}{}", spaces, entry_name);
+                        print_entry(prefix, entry_name, is_last);
                     }
                 }
             }
@@ -80,10 +107,11 @@ fn main() {
     }
     let max_layer: i32 = matches
         .opt_str("d")
-        .map(|s| s.parse::<i32>().unwrap_or(5))
-        .unwrap_or(5);
+        .map(|s| s.parse::<i32>().unwrap_or(3))
+        .unwrap_or(3);
 
-    let stats = print_dir_content(root_path, 0, 0, max_layer);
+    println!(".");
+    let stats = print_dir_content(root_path, "", 0, max_layer);
 
     println!("\n{} directories, {} files", stats.dirs, stats.files);
 }
