@@ -1,3 +1,4 @@
+use colored::*;
 use getopts::Options;
 use std::{fs, usize};
 extern crate getopts;
@@ -9,9 +10,9 @@ struct Stats {
 
 // │ └ ├ ─
 
-fn print_entry(prefix: &str, entry_name: &str, is_last: bool) {
-    let mark = if is_last {"└─ "} else {"├─ "};
-    println!("{}{}{}", prefix, mark, entry_name);
+fn print_entry(prefix: &str, entry_name: &str, is_last: bool, color: Color) {
+    let mark = if is_last { "└─ " } else { "├─ " };
+    println!("{}{}{}", prefix, mark, entry_name.color(color));
 }
 
 fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) -> Stats {
@@ -34,7 +35,9 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
             } else if !a_starts_with_dot && b_starts_with_dot {
                 std::cmp::Ordering::Greater
             } else {
-                a_name.partial_cmp(&b_name).unwrap_or(std::cmp::Ordering::Equal)
+                a_name
+                    .partial_cmp(&b_name)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             }
         });
         let total_entries = entries.len();
@@ -48,18 +51,22 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
                         return dir_stats;
                     }
                     let is_last = index == total_entries - 1;
-                    let mark = if is_last {" "} else {"│"};
+                    let mark = if is_last { " " } else { "│" };
                     if metadata.is_dir() {
                         dir_stats.dirs += 1;
-                        print_entry(prefix, entry_name, is_last);
+                        print_entry(prefix, entry_name, is_last, Color::Blue);
                         let sub_path = entry.path().to_string_lossy().into_owned();
-                        let sub_stats =
-                            print_dir_content(&sub_path, &format!("{}{}  ", prefix, mark), curr_layer + 1, max_layer);
+                        let sub_stats = print_dir_content(
+                            &sub_path,
+                            &format!("{}{}  ", prefix, mark),
+                            curr_layer + 1,
+                            max_layer,
+                        );
                         dir_stats.dirs += sub_stats.dirs;
                         dir_stats.files += sub_stats.files;
                     } else {
                         dir_stats.files += 1;
-                        print_entry(prefix, entry_name, is_last);
+                        print_entry(prefix, entry_name, is_last, Color::BrightWhite);
                     }
                 }
             }
