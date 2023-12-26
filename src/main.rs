@@ -52,7 +52,7 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
                     let mark = if is_last { " " } else { "│" };
                     if metadata.is_dir() {
                         dir_stats.dirs += 1;
-                        print_entry(prefix, entry_name, is_last, Color::Blue);
+                        print_entry(prefix, &format!("{}/", entry_name), is_last, Color::Blue);
                         let sub_path = entry.path().to_string_lossy().into_owned();
                         let sub_stats = print_dir_content(
                             &sub_path,
@@ -115,7 +115,7 @@ fn main() {
         .map(|s| s.parse::<i32>().unwrap_or(3))
         .unwrap_or(3);
 
-    println!(".");
+    println!("{}", root_path.color(Color::Blue));
     let stats = print_dir_content(root_path, "", 0, max_layer);
 
     println!("\n{} directories, {} files", stats.dirs, stats.files);
