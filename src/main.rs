@@ -33,9 +33,12 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
             } else if !a_starts_with_dot && b_starts_with_dot {
                 std::cmp::Ordering::Greater
             } else {
-                a_name
-                    .partial_cmp(&b_name)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                let primary_order = a_name.partial_cmp(&b_name).unwrap_or(std::cmp::Ordering::Equal);
+                if primary_order == std::cmp::Ordering::Equal {
+                    a_name.cmp(&b_name)
+                } else {
+                    primary_order
+                }
             }
         });
         let total_entries = entries.len();
