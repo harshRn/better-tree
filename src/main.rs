@@ -8,10 +8,8 @@ struct Stats {
     files: usize,
 }
 
-// │ └ ├ ─
-
 fn print_entry(prefix: &str, entry_name: &str, is_last: bool, color: Color) {
-    let mark = if is_last { "└─ " } else { "├─ " };
+    let mark = if is_last { "└── " } else { "├── " };
     println!("{}{}{}", prefix, mark, entry_name.color(color));
 }
 
@@ -58,7 +56,7 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
                         let sub_path = entry.path().to_string_lossy().into_owned();
                         let sub_stats = print_dir_content(
                             &sub_path,
-                            &format!("{}{}  ", prefix, mark),
+                            &format!("{}{}   ", prefix, mark),
                             curr_layer + 1,
                             max_layer,
                         );

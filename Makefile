@@ -15,4 +15,6 @@ uninstall:
 	sudo rm -f /usr/local/bin/$(TARGET)
 	sudo rm -f /usr/local/bin/$(ALIAS_1)
 
-.PHONY: install uninstall
+re: uninstall install
+
+.PHONY: install uninstall re
