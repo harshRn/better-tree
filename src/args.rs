@@ -11,7 +11,7 @@ pub struct Settings {
 	pub root_path:		String,
 
 	/// Directory scanning depth
-	#[arg(short, long, default_value = "3")]
+	#[arg(short, long, default_value = "999")]
 	pub depth:			i32,
 
 	/// Show hidden entries
