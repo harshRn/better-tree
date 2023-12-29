@@ -1,6 +1,6 @@
 use colored::*;
 use getopts::Options;
-use std::{fs, usize};
+use std::{fs::{self, DirEntry}, usize};
 extern crate getopts;
 
 struct Stats {
@@ -13,12 +13,8 @@ fn print_entry(prefix: &str, entry_name: &str, is_last: bool, color: Color) {
     println!("{}{}{}", prefix, mark, entry_name.color(color));
 }
 
-fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) -> Stats {
-    let mut dir_stats = Stats { dirs: 0, files: 0 };
-
-    if let Ok(entries) = fs::read_dir(path) {
-        let mut entries: Vec<_> = entries.collect::<Result<_, _>>().unwrap_or_else(|_| vec![]);
-        entries.sort_by(|a, b| {
+fn sort_entries(entries: &mut Vec<DirEntry>) {
+    return entries.sort_by(|a, b| {
             let a_file_name = a.file_name();
             let b_file_name = b.file_name();
 
@@ -40,7 +36,15 @@ fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) 
                     primary_order
                 }
             }
-        });
+        })
+}
+
+fn print_dir_content(path: &str, prefix: &str, curr_layer: i32, max_layer: i32) -> Stats {
+    let mut dir_stats = Stats { dirs: 0, files: 0 };
+
+    if let Ok(entries) = fs::read_dir(path) {
+        let mut entries: Vec<DirEntry> = entries.collect::<Result<_, _>>().unwrap_or_else(|_| vec![]);
+        sort_entries(&mut entries);
         let total_entries = entries.len();
         for (index, entry) in entries.iter().enumerate() {
             if let Ok(metadata) = entry.metadata() {
