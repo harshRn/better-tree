@@ -48,7 +48,14 @@ RESET			:= $(shell echo "\033[0m")
 
 all: install
 
-$(TARGET):
+# Check if cargo is installed
+pre:
+ifndef RUST_CRGO
+    $(error "Cargo is not installed. Please install Rust toolchain (https://www.rust-lang.org/tools/install)")
+endif
+
+
+$(TARGET): pre
 	cargo build --release
 
 install: $(TARGET)
