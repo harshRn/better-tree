@@ -2,7 +2,7 @@ BIN_DIR			:= $(shell pwd)/target/release
 TARGET			:= $(BIN_DIR)/better-tree
 SHRC_CFG		:= $(shell find $(HOME) -maxdepth 1 -type f -name ".*shrc")
 ALIAS_CMD		:= alias btree="$(BIN_DIR)/better-tree"
-RUST_CRGO		:= $(shell command -v cargo 2> /dev/null)
+RUST_CARGO		:= $(shell command -v cargo 2> /dev/null)
 
 
 # Text color variables
@@ -50,7 +50,7 @@ all: install
 
 # Check if cargo is installed
 pre:
-ifndef RUST_CRGO
+ifndef RUST_CARGO
     $(error "Cargo is not installed. Please install Rust toolchain (https://www.rust-lang.org/tools/install)")
 endif
 
